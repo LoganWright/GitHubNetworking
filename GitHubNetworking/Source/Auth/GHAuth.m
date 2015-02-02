@@ -59,7 +59,7 @@ static NSString * const kAuthorizationKeyCode = @"code";
         shared.credentialUpdatedBlock(sharedCredential, nil);
     } else {
         NSURL *authUrl = [self authUrl];
-#if TARGET_OS_IPHONE
+#if TARGET_OS_IPHONE || TARGET_IPHONE_SIMULATOR
         UIApplication *sharedApplication = [UIApplication sharedApplication];
         if ([sharedApplication canOpenURL:authUrl]) {
             [sharedApplication openURL:authUrl];
@@ -67,6 +67,10 @@ static NSString * const kAuthorizationKeyCode = @"code";
             NSLog(@"Unable to open authorization url: %@", authUrl);
         }
 #else
+        [[NSAppleEventManager sharedAppleEventManager] setEventHandler:shared
+                                                           andSelector:@selector(handleURLEvent:withReplyEvent:)
+                                                         forEventClass:kInternetEventClass
+                                                            andEventID:kAEGetURL];
         [[NSWorkspace sharedWorkspace] openURL:authUrl];
 #endif
     }
@@ -154,6 +158,17 @@ static GHCredential *sharedCredential = nil;
     }
 }
 
+#pragma mark - osx Url Event
 
+#if !TARGET_OS_IPHONE && !TARGET_IPHONE_SIMULATOR
+- (void)handleURLEvent:(NSAppleEventDescriptor*)event withReplyEvent:(NSAppleEventDescriptor*)replyEvent
+{
+    NSString *urlString = [[event paramDescriptorForKeyword:keyDirectObject] stringValue];
+    NSURL *url = [NSURL URLWithString:urlString];
+    if ([GHAuth canHandleOpenUrl:url]) {
+        [GHAuth handleOpenUrl:url];
+    }
+}
+#endif
 
 @end

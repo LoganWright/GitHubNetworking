@@ -18,7 +18,7 @@ GHComment,
 GHIssueEvent,
 GHIssueLabel;
 
-#if TARGET_OS_IPHONE
+#if TARGET_OS_IPHONE || TARGET_IPHONE_SIMULATOR
 @class UIColor;
 #define GHColor UIColor
 #else
